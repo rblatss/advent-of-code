@@ -3,37 +3,19 @@
 #include <cstdlib>
 #include <vector>
 #include <queue>
+#include <chrono>
 
 // Number elements
 #define NELS 100
-
-typedef struct progress_point
-{
-    unsigned char x;
-    unsigned char y;
-    int steps;
-    // bool right, down, left, up;
-    progress_point(unsigned char _x, unsigned char _y, int _steps)
-    {
-        x = _x;
-        y = _y;
-        steps = _steps;
-        // right = false;
-        // down = false;
-        // left = false;
-        // up = false;
-    }
-} progress_point;
 
 // Globals, yuck, i know
 int width;
 int height;
 unsigned char map[NELS][NELS];
-bool visited_map[NELS][NELS];
+int visited_map[NELS][NELS];
 unsigned char Ex;
 unsigned char Ey;
-unsigned char Sx;
-unsigned char Sy;
+std::vector<std::pair<int, int>> starting_positions;
 
 void printMap()
 {
@@ -78,8 +60,8 @@ void readMap(const char *filename)
             if(map[i][j] == 'S')
             {
                 map[i][j] = 'a';
-                Sx = i;
-                Sy = j;
+                // Sx = i;
+                // Sy = j;
                 break;
             }
         }
@@ -103,139 +85,107 @@ void readMap(const char *filename)
     // Initialize visited_map
     for(int i = 0; i < height; i++)
     {
-        memset(visited_map[i], 0, sizeof(bool) * width);
+        memset(visited_map[i], 0, sizeof(int) * width);
+    }
+
+    // Part 2 - Find starting positions
+    for(int i = 0; i < height; i++)
+    {
+        for(int j = 0; j < width; j++)
+        {
+            if(map[i][j] == 'a')
+            {
+                starting_positions.push_back(std::make_pair(i, j));
+            }
+        }
     }
 }
 
-// int findMinPathDFS()
-// {
-//     int min_steps = -1;
-
-//     std::vector<progress_point *> stack;
-//     int curr_x = Sx;
-//     int curr_y = Sy;
-//     int steps = 0;
-
-//     // We've visited the starting point
-//     visited_map[curr_x][curr_y].visited = true;
-
-//     // First step
-//     progress_point *next_p = new progress_point(curr_x, curr_y, steps);
-//     stack.push_back(next_p);
-
-//     while(true)
-//     {
-//         // Where are we? How many steps?
-//         progress_point *curr_p = stack.back();
-//         curr_y = curr_p->y;
-//         curr_x = curr_p->x;
-//         steps = curr_p->steps;
-
-//         printf("x/y: %u/%u\n", curr_x, curr_y);
-//         break;
-//         // Check if we're at 'E'
-//         if(map[curr_x][curr_y] == 'z')
-//         {
-//             if(curr_x == Ex && curr_y == Ey)
-//             {
-//                 if(min_steps == -1 || steps < min_steps)
-//                 {
-//                     min_steps = steps;
-//                 }
-//                 visited_map[curr_x][curr_y].visited = false;
-//                 progress_point *curr_p = stack.back();
-//                 stack.pop_back();
-//                 delete curr_p;
-//                 continue;
-//             }
-//         }
-
-//         // Check adjacent squares starting at right, going clockwise
-//         if(curr_p->right == false)
-//         {
-//             curr_p->right = true;
-
-//             if (curr_y + 1 < width &&
-//                 (map[curr_x][curr_y + 1] - map[curr_x][curr_y] <= 1) &&
-//                 visited_map[curr_x][curr_y + 1].visited == false)
-//             {
-//                 // Take step
-//                 visited_map[curr_x][curr_y].visited = true;
-//                 progress_point *next_p = new progress_point(curr_x, curr_y + 1, steps + 1);
-//                 stack.push_back(next_p);
-//             }
-//         }
-//         else if(curr_p->down == false)
-//         {
-//             curr_p->down = true;
-
-//             if (curr_x + 1 < height &&
-//                 (map[curr_x + 1][curr_y] - map[curr_x][curr_y] <= 1) &&
-//                 visited_map[curr_x + 1][curr_y].visited == false)
-//             {
-//                 // Take step
-//                 visited_map[curr_x][curr_y].visited = true;
-//                 progress_point *next_p = new progress_point(curr_x + 1, curr_y, steps + 1);
-//                 stack.push_back(next_p);
-//             }
-//         }
-//         else if(curr_p->left == false)
-//         {
-//             curr_p->left = true;
-
-//             if (curr_y - 1 >= 0 &&
-//                 (map[curr_x][curr_y - 1] - map[curr_x][curr_y] <= 1) &&
-//                 visited_map[curr_x][curr_y - 1].visited == false)
-//             {
-//                 // Take step
-//                 visited_map[curr_x][curr_y].visited = true;
-//                 progress_point *next_p = new progress_point(curr_x, curr_y - 1, steps + 1);
-//                 stack.push_back(next_p);
-//             }
-//         }
-//         else if(curr_p->up == false)
-//         {
-//             curr_p->up = true;
-
-//             if (curr_x - 1 >= 0 && 
-//                 map[curr_x - 1][curr_y] - map[curr_x][curr_y] <= 1 &&
-//                 visited_map[curr_x - 1][curr_y].visited == false)
-//             {
-//                 // Take step
-//                 visited_map[curr_x][curr_y].visited = true;
-//                 progress_point *next_p = new progress_point(curr_x - 1, curr_y, steps + 1);
-//                 stack.push_back(next_p);
-//             }
-//         }
-//         else // backtrack, we've tried every dxn
-//         {
-//             visited_map[curr_x][curr_y].visited = false;
-//             curr_p = stack.back();
-//             stack.pop_back();
-//             delete curr_p;
-            
-//             // Check if we're done
-//             if(curr_x == 0 && curr_y == 0)
-//             {
-//                 break;
-//             }
-//         }
-//     }
-
-//     return min_steps;
-// }
-
-int findMinPathBFS()
+int findMinPathDFS(unsigned char Sx, unsigned char Sy)
 {
-    unsigned char curr_x;
-    unsigned char curr_y;
-    int steps;
+    std::vector<std::pair<unsigned char, unsigned char> > pos_s;
+    std::vector<int> steps_s;
+    int steps = 0;
+    unsigned char curr_x = Sx;
+    unsigned char curr_y = Sy;
+
+    pos_s.push_back(std::make_pair(curr_x, curr_y));
+    steps_s.push_back(steps);
+    while(!pos_s.empty())
+    {
+        curr_x = pos_s.back().first;
+        curr_y = pos_s.back().second;
+        steps = steps_s.back();
+        pos_s.pop_back();
+        steps_s.pop_back();
+
+        // If we already found a route that is less steps, continue
+        if(visited_map[curr_x][curr_y] != 0 && steps >= visited_map[curr_x][curr_y])
+        {
+            continue;
+        }
+
+        // Record min steps
+        visited_map[curr_x][curr_y] = steps;
+
+        // If 'E', stop
+        if(curr_x == Ex && curr_y == Ey)
+        {
+            continue;
+        }
+
+        // Consider all dxns
+        if (curr_y + 1 < width &&
+            map[curr_x][curr_y + 1] - map[curr_x][curr_y] <= 1 &&
+            (visited_map[curr_x][curr_y + 1] == 0 ||
+             visited_map[curr_x][curr_y + 1] > steps + 1) &&
+             !(curr_x == Sx && curr_y + 1 == Sy) )  // TODO not needed because next step needs to be +1 character
+        {
+            pos_s.push_back(std::make_pair(curr_x, curr_y + 1));
+            steps_s.push_back(steps + 1);
+        }
+        if(curr_x + 1 < height &&
+            map[curr_x + 1][curr_y] - map[curr_x][curr_y] <= 1 &&
+            (visited_map[curr_x + 1][curr_y] == 0 ||
+             visited_map[curr_x + 1][curr_y] > steps + 1) &&
+             !(curr_x + 1 == Sx && curr_y == Sy))
+        {
+            pos_s.push_back(std::make_pair(curr_x + 1, curr_y));
+            steps_s.push_back(steps + 1);
+        }
+        if(curr_y - 1 >= 0 &&
+            map[curr_x][curr_y - 1] - map[curr_x][curr_y] <= 1 &&
+            (visited_map[curr_x][curr_y - 1] == 0 ||
+             visited_map[curr_x][curr_y - 1] > steps + 1) &&
+             !(curr_x - 1 == Sx && curr_y == Sy))
+        {
+            pos_s.push_back(std::make_pair(curr_x, curr_y - 1));
+            steps_s.push_back(steps + 1);
+        }
+        if(curr_x - 1 >= 0 &&
+            map[curr_x - 1][curr_y] - map[curr_x][curr_y] <= 1 &&
+            (visited_map[curr_x - 1][curr_y] == 0 ||
+             visited_map[curr_x - 1][curr_y] > steps + 1) &&
+             !(curr_x - 1 == Sx && curr_y == Sy))
+        {
+            pos_s.push_back(std::make_pair(curr_x - 1, curr_y));
+            steps_s.push_back(steps + 1);
+        }
+    }
+
+    return visited_map[Ex][Ey];
+}
+
+int findMinPathBFS(unsigned char Sx, unsigned char Sy)
+{
     std::queue<std::pair<unsigned char, unsigned char> > pos_q;
     std::queue<int> steps_q;
+    int steps = 0;
+    unsigned char curr_x = Sx;
+    unsigned char curr_y = Sy;
+
     pos_q.push(std::make_pair(curr_x, curr_y));
     steps_q.push(steps);
-    int min_steps = -1;
-
     while(!pos_q.empty())
     {
         curr_x = pos_q.front().first;
@@ -244,57 +194,99 @@ int findMinPathBFS()
         pos_q.pop();
         steps_q.pop();
 
-        // Why does this work?
-        visited_map[curr_x][curr_y] = true;
-
-        // Check if end is reached
-        if(map[curr_x][curr_y] == 'z' &&
-           curr_x == Ex && curr_y == Ey)
+        // If we already found a route that is less steps, continue
+        if(visited_map[curr_x][curr_y] != 0 && steps >= visited_map[curr_x][curr_y])
         {
-            if(min_steps == -1 || steps < min_steps)
-            {
-                min_steps = steps;
-            }
+            continue;
+        }
+
+        // Record min steps
+        visited_map[curr_x][curr_y] = steps;
+
+        // If 'E', stop
+        if(curr_x == Ex && curr_y == Ey)
+        {
             continue;
         }
 
         // Consider all dxns
         if (curr_y + 1 < width &&
             map[curr_x][curr_y + 1] - map[curr_x][curr_y] <= 1 &&
-            visited_map[curr_x][curr_y + 1] == false)
+            (visited_map[curr_x][curr_y + 1] == 0 ||
+             visited_map[curr_x][curr_y + 1] > steps + 1) &&
+             !(curr_x == Sx && curr_y + 1 == Sy) )  // TODO not needed because next step needs to be +1 character
         {
             pos_q.push(std::make_pair(curr_x, curr_y + 1));
             steps_q.push(steps + 1);
         }
         if(curr_x + 1 < height &&
             map[curr_x + 1][curr_y] - map[curr_x][curr_y] <= 1 &&
-            visited_map[curr_x + 1][curr_y] == false)
+            (visited_map[curr_x + 1][curr_y] == 0 ||
+             visited_map[curr_x + 1][curr_y] > steps + 1) &&
+             !(curr_x + 1 == Sx && curr_y == Sy))
         {
             pos_q.push(std::make_pair(curr_x + 1, curr_y));
             steps_q.push(steps + 1);
         }
         if(curr_y - 1 >= 0 &&
             map[curr_x][curr_y - 1] - map[curr_x][curr_y] <= 1 &&
-            visited_map[curr_x][curr_y - 1] == false)
+            (visited_map[curr_x][curr_y - 1] == 0 ||
+             visited_map[curr_x][curr_y - 1] > steps + 1) &&
+             !(curr_x - 1 == Sx && curr_y == Sy))
         {
             pos_q.push(std::make_pair(curr_x, curr_y - 1));
             steps_q.push(steps + 1);
         }
         if(curr_x - 1 >= 0 &&
             map[curr_x - 1][curr_y] - map[curr_x][curr_y] <= 1 &&
-            visited_map[curr_x - 1][curr_y] == false)
+            (visited_map[curr_x - 1][curr_y] == 0 ||
+             visited_map[curr_x - 1][curr_y] > steps + 1) &&
+             !(curr_x - 1 == Sx && curr_y == Sy))
         {
             pos_q.push(std::make_pair(curr_x - 1, curr_y));
             steps_q.push(steps + 1);
         }
     }
 
-    return min_steps;
+    return visited_map[Ex][Ey];
 }
 
 int main()
 {
     readMap("day12.txt");
-    printf("%d\n", findMinPathBFS());
+    int min_steps_bfs = 0, min_steps_dfs = 0;
+    int steps;
+
+    // Compare BFS and DFS time
+    std::chrono::high_resolution_clock::time_point start_time;
+    std::chrono::high_resolution_clock::duration elapsed_time;
+
+    // BFS
+    start_time = std::chrono::high_resolution_clock::now();
+    for(auto &sp : starting_positions)
+    {
+        min_steps_bfs = findMinPathBFS(sp.first, sp.second);
+        if(min_steps_bfs == 0 || steps < min_steps_bfs)
+        {
+            min_steps_bfs = steps;
+        }
+    }
+    elapsed_time = std::chrono::high_resolution_clock::now() - start_time;
+    printf("BFS time = %luus\n", std::chrono::duration_cast<std::chrono::microseconds>(elapsed_time).count());
+
+    // DFS
+    start_time = std::chrono::high_resolution_clock::now();
+    for(auto &sp : starting_positions)
+    {
+        min_steps_dfs = findMinPathDFS(sp.first, sp.second);
+        if(min_steps_dfs == 0 || steps < min_steps_dfs)
+        {
+            min_steps_dfs = steps;
+        }
+    }
+    elapsed_time = std::chrono::high_resolution_clock::now() - start_time;
+    printf("DFS time = %luus\n", std::chrono::duration_cast<std::chrono::microseconds>(elapsed_time).count());
+    printf("min steps: %u\n", min_steps_bfs);
+    printf("dfs result == bfs result: %u\n", min_steps_bfs == min_steps_dfs);
     return 0;
 }

@@ -1,5 +1,15 @@
-def compare(p1: list, p2: list) -> bool:
+def find_integer(l: list) -> int:
+    for x in l:
+        if isinstance(x, list):
+            val = find_integer(x)
+            if val:
+                return val
+        else:
+            return x
+    return None
 
+
+def compare(p1: list, p2: list) -> bool:
     # If the right list runs out of items first, the lists are not in the correct order
     if len(p1) > len(p2):
         return False
@@ -13,14 +23,12 @@ def compare(p1: list, p2: list) -> bool:
         # If exactly one value is an integer, compare integer
         # to the first value in the list
         elif isinstance(i1, list) and not isinstance(i2, list):
-            while isinstance(i1, list):
-                i1 = i1[0]
-            if i1 > i2:
+            i1 = find_integer(i1)
+            if i1 and i1 > i2:
                 return False
         elif not isinstance(i1, list) and isinstance(i2, list):
-            while isinstance(i2, list):
-                i2 = i2[0]
-            if i1 > i2:
+            i2 = find_integer(i2)
+            if not i2 or i1 > i2:
                 return False
 
         # If both values are integers, the lower value should come first

@@ -2,7 +2,7 @@ import functools
 from typing import Union
 
 
-def compare(p1: Union[int, list], p2: Union[int, list]) -> bool:
+def compare(p1: Union[int, list], p2: Union[int, list]) -> int:
     # Compare items in lists
     for i1, i2 in zip(p1, p2):
         if isinstance(i1, list) and isinstance(i2, list):

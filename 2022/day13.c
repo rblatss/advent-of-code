@@ -85,64 +85,64 @@ void preprocess_lists(char *buf_left, char *buf_right)
         }
     }
 
-    // Convert ints to lists when needed
-    int ldepth = 0, rdepth = 0;
-    for(int i = 0, j = 0; buf_left[i] != 0 || buf_right[j] != 0;)
-    {
-        if(buf_left[i] == '[' && ISNUMBER(buf_right[j]))
-        {
-            insert_char(buf_right, j, '[');
-            insert_char(buf_right, j + 2, ']');
-        }
-        else if(ISNUMBER(buf_left[i]) && buf_right[j] == '[')
-        {
-            insert_char(buf_left, i, '[');
-            insert_char(buf_left, i + 2, ']');
-        }
+    // // Convert ints to lists when needed
+    // int ldepth = 0, rdepth = 0;
+    // for(int i = 0, j = 0; buf_left[i] != 0 || buf_right[j] != 0;)
+    // {
+    //     if(buf_left[i] == '[' && ISNUMBER(buf_right[j]))
+    //     {
+    //         insert_char(buf_right, j, '[');
+    //         insert_char(buf_right, j + 2, ']');
+    //     }
+    //     else if(ISNUMBER(buf_left[i]) && buf_right[j] == '[')
+    //     {
+    //         insert_char(buf_left, i, '[');
+    //         insert_char(buf_left, i + 2, ']');
+    //     }
 
-        if(buf_left[i] == '[') ldepth++;
-        else if(buf_left[i] == ']') ldepth--;
-        if(buf_right[j] == '[') rdepth++;
-        else if(buf_right[j] == ']') rdepth--;
+    //     if(buf_left[i] == '[') ldepth++;
+    //     else if(buf_left[i] == ']') ldepth--;
+    //     if(buf_right[j] == '[') rdepth++;
+    //     else if(buf_right[j] == ']') rdepth--;
 
-        if(ldepth < rdepth)
-        {
-            i++; // skip ']'
+    //     if(ldepth < rdepth)
+    //     {
+    //         i++; // skip ']'
 
-            // Skip remainder of sublist
-            for(; buf_right[j] && rdepth > ldepth; j++)
-            {
-                if(buf_right[j] == '[')
-                {
-                    rdepth++;
-                }
-                else if (buf_right[j] == ']')
-                {
-                    rdepth--;
-                }
-            }
-        }
-        else if(rdepth < ldepth)
-        {
-            j++; // skip ']'
+    //         // Skip remainder of sublist
+    //         for(; buf_right[j] && rdepth > ldepth; j++)
+    //         {
+    //             if(buf_right[j] == '[')
+    //             {
+    //                 rdepth++;
+    //             }
+    //             else if (buf_right[j] == ']')
+    //             {
+    //                 rdepth--;
+    //             }
+    //         }
+    //     }
+    //     else if(rdepth < ldepth)
+    //     {
+    //         j++; // skip ']'
 
-            // Skip remainder of sublist
-            for(; buf_left[i] && ldepth > rdepth; i++)
-            {
-                if(buf_left[i] == '[')
-                {
-                    ldepth++;
-                }
-                else if (buf_left[i] == ']')
-                {
-                    ldepth--;
-                }
-            }
-        }
+    //         // Skip remainder of sublist
+    //         for(; buf_left[i] && ldepth > rdepth; i++)
+    //         {
+    //             if(buf_left[i] == '[')
+    //             {
+    //                 ldepth++;
+    //             }
+    //             else if (buf_left[i] == ']')
+    //             {
+    //                 ldepth--;
+    //             }
+    //         }
+    //     }
 
-        if(buf_left[i]) i++;
-        if(buf_right[j]) j++;
-    }
+    //     if(buf_left[i]) i++;
+    //     if(buf_right[j]) j++;
+    // }
 }
 
 bool compare_list(const char *left, const char *right)
@@ -154,62 +154,67 @@ bool compare_list(const char *left, const char *right)
     while(left[lindex] && right[rindex])
     {
         // Skip commas
-        if(left[lindex] == ',')
+        if(left[lindex] == ',' || left[lindex] == ']')
         {
             lindex++;
         }
-        if(right[rindex] == ',')
+        if(right[rindex] == ',' || right[rindex] == ']')
         {
             rindex++;
         }
 
-        // Exit sublist
-        if(left[lindex] == ']')
+        // Compare list to single digit
+        if(left[lindex] == '[' && right[rindex] != '[')
         {
-            ldepth--;
-            if(right[rindex] != ']')
+            lindex++;
+            ldepth++;
+
+            // Compare
+            if(left[lindex] > right[rindex])
             {
-                // Skip remainder of sublist
-                while(right[rindex] && rdepth > ldepth)
-                {
-                    rindex++;
-                    if(right[rindex] == '[')
-                    {
-                        rdepth++;
-                    }
-                    else if (right[rindex] == ']')
-                    {
-                        rdepth--;
-                    }
-                }
-            }
-            else
-            {
-                rdepth--;
-            }
-        }
-        else if(right[rindex] == ']')
-        {
-            rdepth--;
-            if(left[lindex] != ']')
-            {
-                // Out of order
                 return false;
             }
-            else
-            {
-                ldepth--;
-            }
-        }
 
-        // Enter sublist
-        // The packets have been preprocessed, so it's
-        // gauranteed lindex and rindex point to '[' 
-        // at the same time.
-        else if(left[lindex] == '[' && right[rindex] == '[')
+            // Skip remainder of sublist
+            while(left[lindex] && ldepth > rdepth)
+            {
+                lindex++;
+                if(left[lindex] == '[')
+                {
+                    ldepth++;
+                }
+                else if (left[lindex] == ']')
+                {
+                    ldepth--;
+                }
+            }
+            lindex++; // skip ']'
+        }
+        else if(right[rindex] == '[' && left[lindex] != '[')
         {
-            ldepth++;
+            rindex++;
             rdepth++;
+
+            // Compare
+            if(left[lindex] > right[rindex])
+            {
+                return false;
+            }
+
+            // Skip remainder of sublist
+            while(right[rindex] && rdepth > ldepth)
+            {
+                rindex++;
+                if(right[rindex] == '[')
+                {
+                    rdepth++;
+                }
+                else if (right[rindex] == ']')
+                {
+                    rdepth--;
+                }
+            }
+            rindex++; // skip ']'
         }
 
         // Compare

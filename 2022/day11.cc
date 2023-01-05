@@ -3,25 +3,29 @@
 #include <stdlib.h>
 #include <algorithm> // std::sort
 #include <vector> // write custom predicate function
+#include <numeric>
 
 #define N_MONKEYS 4 /* ughhhh */
 #define KB (1024)
 
+typedef unsigned long long int llu;
+
 typedef struct monkey
 {
     int n_items;
-    unsigned long long int items[100];
+    llu items[100];
     char op;
     char left_op[4], right_op[4];
-    unsigned long long int div;
+    llu div;
     int throw_true;
     int throw_false;
-    unsigned long long int number_items_inspected;
+    llu number_items_inspected;
 } monkey;
 
 #define IS_DIGIT(c) (c >= '0' && c <= '9')
 
-bool monkey_sorter(monkey const& lhs, monkey const& rhs) {
+bool monkey_sorter(monkey const& lhs, monkey const& rhs)
+{
     return lhs.number_items_inspected > rhs.number_items_inspected;
 }
 
@@ -116,7 +120,7 @@ void createMonkeyRecords(const char *filename, std::vector<struct monkey> &monke
         else if (line_buffer[2] == 'T')  // Test
         {
             line_buffer[strlen(line_buffer) - 1] = 0;
-            monkeys[mindex].div = (unsigned long long int) atoi(&line_buffer[21]);
+            monkeys[mindex].div = (llu) atoi(&line_buffer[21]);
             fgets(line_buffer, KB, f);
             monkeys[mindex].throw_true = line_buffer[strlen(line_buffer) - 2] - '0';
             fgets(line_buffer, KB, f);
@@ -128,8 +132,8 @@ void createMonkeyRecords(const char *filename, std::vector<struct monkey> &monke
 
 void do_round(std::vector<monkey> &monkeys)
 {
-    unsigned long long int worry_level;
-    unsigned long long int left, right;
+    llu worry_level;
+    llu left, right;
     int tgt;
     int number_starting_items;
     for(int src = 0; src < N_MONKEYS; src++)
@@ -181,8 +185,11 @@ void do_round(std::vector<monkey> &monkeys)
 
             // Monkey gets bored
             // Part 2: no longer divide by 3
-            // worry_level /= 3;
-            // printf("%llu ", worry_level);
+            printf("%llu ", worry_level);
+            worry_level /= 3;
+            printf("%llu ", worry_level);
+            // llu _lcm = std::lcm(worry_level, m.div);
+            // worry_level /= _lcm;
 
             // Where to throw?
             if(worry_level % m.div == 0)

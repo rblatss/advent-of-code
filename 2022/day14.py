@@ -1,42 +1,44 @@
 import re
 import numpy as np
-from typing import List
 
 # TODO preprocess input for the min
-y_offset = 490  # arbitrary
-DISPLAY_SIZE = 20
+y_offset = 0  # arbitrary
+DISPLAY_SIZE = 1000
 sand_entry_point = (0, 500 - y_offset)  # from the problem prompt
+floor = -1
 
-
-def simulate_sand_point(display: List[List]) -> List[List]:
+def find_grain_of_sand_loc(display: np.ndarray) -> tuple:
     # None -> fell into abyss
     # display -> sand landed, display updated)
     x, y = (sand_entry_point[0], sand_entry_point[1])
-    while display[x + 1, y] == '.':
-        x += 1
 
-    x_, y_ = x + 1, y + 1
+    while x != DISPLAY_SIZE - 1:
+        # Try down
+        if display[x + 1, y] == '.':
+            x += 1
+        # Try left
+        elif display[x + 1, y - 1] == '.':
+            x += 1
+            y -= 1
+        # Try right
+        elif display[x + 1, y + 1] == '.':
+            x += 1
+            y += 1
+        # Stopped
+        else:
+            break
 
-    # This could be recursive
-    # Try left
-    while display[x_ + 1, y_ - 1] == '.':
-        x_ += 1
-        y_ += 1
-
-
-    if x_ != x:
-        display[x_, y_] = 'o'
-
-    # Try right
-    while display[x_ + 1, y_ + 1] == '.':
-        x_ += 1
-        y_ += 1
-    if x_ != x:
-        display[x_, y_] = 'o'
-
-    # else, stay
+    if x != DISPLAY_SIZE - 1:
+        return (x, y)
     else:
-        display[x, y] = 'o'
+        return None
+
+
+# Print display in readable format
+def print_display(display: np.ndarray) -> None:
+    for row in display:
+        print(''.join(row))
+    print()
 
 
 # Create display
@@ -63,9 +65,27 @@ with open("day14.txt", "r") as infile:
             x_dxn = 0 if not x_diff else int(x_diff / abs(x_diff))
             y_dxn = 0 if not y_diff else int(y_diff / abs(y_diff))
             while p1 != p2:
-                display[p1] = '#'
+                display[p1[0], p1[1]] = '#'
                 p1[0] += x_dxn
                 p1[1] += y_dxn
+            display[p1[0], p1[1]] = '#'
 
-display[sand_entry_point[0], sand_entry_point[1]] = '+'
-print(display)
+            # Part 2 - find floor
+            if p1[0] > floor:
+                floor = p1[0]
+            if p2[0] > floor:
+                floor = p2[0]
+
+# Part 2 - create floor
+display[floor + 2] = '#'
+
+sand_count = 0
+# print_display(display)
+while True:
+    pos = find_grain_of_sand_loc(display)
+    display[pos] = 'o'
+    sand_count += 1
+    if pos == sand_entry_point:
+        break
+# print_display(display)
+print(sand_count)
